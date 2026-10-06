@@ -1,7 +1,7 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System.Collections;
 
-namespace PGP.Data {
+namespace GPSR.Data {
 
   public interface ISource : ICloneable {
     string Id { get; set; }

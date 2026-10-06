@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core {
+namespace GPSR.Core {
   public class Utils {
 
     public static int FindSubtreeLimit(RPN<Symbol> p, int idx) {

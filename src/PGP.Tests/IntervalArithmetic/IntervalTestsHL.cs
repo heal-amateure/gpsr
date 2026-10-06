@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Xunit;
-using PGP.Core;
+using GPSR.Core;
 
-namespace PGP.Tests.IntervalArithmetic {
+namespace GPSR.Tests.IntervalArithmetic {
   public class IntervalTestsHL {
     private readonly Interval a = new Interval(-1, 1);
     private readonly Interval b = new Interval(-2, 2);

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace PGP.Utils {
+namespace GPSR.Utils {
   public static class Extensions {
     public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, double R) {
       if (R < 0 || R > 1.0) return null;

@@ -1,12 +1,12 @@
-﻿using PGP.Core.Metrics;
-using PGP.Utils;
+﻿using GPSR.Core.Metrics;
+using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PGP.Core {
+namespace GPSR.Core {
 
   public enum EvaluationMetric {
     PearsonR = 0,

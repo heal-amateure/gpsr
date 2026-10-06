@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace PGP.Utils {
+namespace GPSR.Utils {
   public static class Statistics {
     public static int Max(int a, int b) {
       return a > b ? a : b;

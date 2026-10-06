@@ -1,13 +1,13 @@
-﻿using PGP.Data;
-using PGP.Utils;
+﻿using GPSR.Data;
+using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
   public class Optimization {
 
-    public static Tuple<RPN<Symbol>, double> OptimizeConstantsViaEvolutionStrategy(PgpAlgorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
+    public static Tuple<RPN<Symbol>, double> OptimizeConstantsViaEvolutionStrategy(Algorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
       var p = program.CloneDeep();
       double pFit = pgp.Evaluate(pgp, p, task, data);
 
@@ -61,7 +61,7 @@ namespace PGP.Core.Operators {
       return Tuple.Create(p, pFit);
     }
 
-    public static Tuple<RPN<Symbol>, double> OptimizeConstants(PgpAlgorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
+    public static Tuple<RPN<Symbol>, double> OptimizeConstants(Algorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
       var p = program.CloneDeep();
       double pFit = pgp.Evaluate(pgp, p, task, data);
 
@@ -123,7 +123,7 @@ namespace PGP.Core.Operators {
       return Tuple.Create(p, pFit);
     }
 
-    public static Tuple<RPN<Symbol>, double> OptimizeCoefficientsAndConstants(PgpAlgorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
+    public static Tuple<RPN<Symbol>, double> OptimizeCoefficientsAndConstants(Algorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
       var p = program.CloneDeep();
       double pFit = pgp.Evaluate(pgp, p, task, data);
 

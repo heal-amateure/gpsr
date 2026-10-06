@@ -1,6 +1,6 @@
-using PGP.Core;
+using GPSR.Core;
 
-namespace PGP.Tests.IntervalArithmetic {
+namespace GPSR.Tests.IntervalArithmetic {
   public class IntervalTests {
     [Fact]
     public void Creation_ValidBounds_Works() {

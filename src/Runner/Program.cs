@@ -1,10 +1,10 @@
-﻿using PGP.Data;
-using PGP.Utils;
-using PGP.Core;
+﻿using GPSR.Data;
+using GPSR.Utils;
+using GPSR.Core;
 using System.Diagnostics;
-using PGP.Core.Operators;
+using GPSR.Core.Operators;
 
-namespace PGP.Runner {
+namespace GPSR.Runner {
   public class Program {
     public static void Main(string[] args) {
       const int dataSeed = -1;
@@ -53,8 +53,8 @@ namespace PGP.Runner {
 
 
       // --- configure gp hyperparameters
-      var pgp = new PgpAlgorithm(randomNumberGenerator: algorithmRng,
-        generations: 100,
+      var alg = new Algorithm(randomNumberGenerator: algorithmRng,
+        generations: 2,
         populationSize: 100,
         symbolCount: 25,
         nestingDepth: 8,
@@ -63,7 +63,7 @@ namespace PGP.Runner {
         elites: 1);
 
       // --- configure gp symbol set (grammar)
-      pgp.SelectedNonterminals = [
+      alg.SelectedNonterminals = [
         Functions.Addition,
         Functions.Subtraction,
         Functions.Multiplication,
@@ -77,30 +77,29 @@ namespace PGP.Runner {
         Functions.Pi
       ];
 
-      pgp.SelectedTerminals = [
+      alg.SelectedTerminals = [
         Terminal.Variable,
         Terminal.Constant
       ];
 
 
       // --- configure gp operators
-      pgp.Breed = Creation.BreedConstrained;
-      pgp.Select = Selection.TournamentSelection;
-      pgp.Optimizer = Optimization.OptimizeCoefficientsAndConstants;
-      pgp.Crossover = Crossing.Cross;
-      pgp.Mutators = [Mutation.MutateReplaceSubtree, Mutation.MutateTerminateSubtree];
-      pgp.Evaluate = EvaluationGpu.EvaluateGPU;
-      //pgp.Evaluate = Evaluation.EvaluateProgram;
+      alg.Breed = Creation.BreedConstrained;
+      alg.Select = Selection.TournamentSelection;
+      alg.Optimizer = Optimization.OptimizeCoefficientsAndConstants;
+      alg.Crossover = Crossing.Cross;
+      alg.Mutators = [Mutation.MutateReplaceSubtree, Mutation.MutateTerminateSubtree];
+      alg.Evaluate = Evaluation.EvaluateStack;
 
 
       // --- configure algorithm options
-      pgp.LogStatistics = true;
-      pgp.UseParallelization = true;
-      pgp.UseDeterministicParallelization = true;
-      pgp.DeterministicSeed = algorithmSeed;
-      pgp.PerformSimplification = false;
-      pgp.OptimizationIterations = 10;
-      pgp.MaxDegreeOfParallelism = -1;
+      alg.LogStatistics = true;
+      alg.UseParallelization = true;
+      alg.UseDeterministicParallelization = true;
+      alg.DeterministicSeed = algorithmSeed;
+      alg.PerformSimplification = false;
+      alg.OptimizationIterations = 10;
+      alg.MaxDegreeOfParallelism = -1;
 
 
       // --- run gp algorithm
@@ -111,7 +110,7 @@ namespace PGP.Runner {
       bool k = false;
       var cts = new CancellationTokenSource();
       sw.Start();
-      System.Threading.Tasks.Task t = pgp.Fit(modelingTask, trainingSet, cts.Token); // gp algorithm execution
+      System.Threading.Tasks.Task t = alg.Fit(modelingTask, trainingSet, cts.Token); // gp algorithm execution
 
       while (!k && !t.IsCompleted) {
         k = Console.KeyAvailable;
@@ -123,39 +122,39 @@ namespace PGP.Runner {
 
 
       // --- print training results/stats
-      pgp.ComputeScores();
+      alg.ComputeScores();
 
       Console.WriteLine();
       Console.WriteLine();
       Console.WriteLine("Training Results:");
       Console.WriteLine();
-      Console.WriteLine($"Evaluations:        {pgp.EvaluationCount}");
+      Console.WriteLine($"Evaluations:        {alg.EvaluationCount}");
       Console.WriteLine($"Runtime:            {(sw.ElapsedMilliseconds / 1000.0):f8} seconds");
-      Console.WriteLine($"Time / Evaluation:  {(sw.ElapsedMilliseconds / 1000.0 / pgp.EvaluationCount):f8} seconds");
+      Console.WriteLine($"Time / Evaluation:  {(sw.ElapsedMilliseconds / 1000.0 / alg.EvaluationCount):f8} seconds");
       Console.WriteLine();
-      Console.WriteLine($"Best Program RPN:   {pgp.BestProgramRPN}");
-      Console.WriteLine($"Best Program INF:   {pgp.BestProgram}");
+      Console.WriteLine($"Best Program RPN:   {alg.BestProgramRPN}");
+      Console.WriteLine($"Best Program INF:   {alg.BestProgram}");
       Console.WriteLine();
-      Console.WriteLine($"Best NMSE:          {pgp.BestProgramNMSE}");
-      Console.WriteLine($"Best RMSE:          {pgp.BestProgramRMSE}");
-      Console.WriteLine($"Best MAE:           {pgp.BestProgramMAE}");
-      Console.WriteLine($"Best MRE:           {pgp.BestProgramMRE}");
-      Console.WriteLine($"Best Pearson R:     {pgp.BestProgramPearsonR}");
-      Console.WriteLine($"Best Pearson R2:    {pgp.BestProgramPearsonR2}");
-      Console.WriteLine($"Best LD:            {pgp.BestProgramLD}");
+      Console.WriteLine($"Best NMSE:          {alg.BestProgramNMSE}");
+      Console.WriteLine($"Best RMSE:          {alg.BestProgramRMSE}");
+      Console.WriteLine($"Best MAE:           {alg.BestProgramMAE}");
+      Console.WriteLine($"Best MRE:           {alg.BestProgramMRE}");
+      Console.WriteLine($"Best Pearson R:     {alg.BestProgramPearsonR}");
+      Console.WriteLine($"Best Pearson R2:    {alg.BestProgramPearsonR2}");
+      Console.WriteLine($"Best LD:            {alg.BestProgramLD}");
       Console.WriteLine();
 
       // --- print test results/stats
-      pgp.ComputeScores(testSet);
+      alg.ComputeScores(testSet);
       Console.WriteLine("Test Results:");
       Console.WriteLine();
-      Console.WriteLine($"Best NMSE:          {pgp.BestProgramNMSE}");
-      Console.WriteLine($"Best RMSE:          {pgp.BestProgramRMSE}");
-      Console.WriteLine($"Best MAE:           {pgp.BestProgramMAE}");
-      Console.WriteLine($"Best MRE:           {pgp.BestProgramMRE}");
-      Console.WriteLine($"Best Pearson R:     {pgp.BestProgramPearsonR}");
-      Console.WriteLine($"Best Pearson R2:    {pgp.BestProgramPearsonR2}");
-      Console.WriteLine($"Best LD:            {pgp.BestProgramLD}");
+      Console.WriteLine($"Best NMSE:          {alg.BestProgramNMSE}");
+      Console.WriteLine($"Best RMSE:          {alg.BestProgramRMSE}");
+      Console.WriteLine($"Best MAE:           {alg.BestProgramMAE}");
+      Console.WriteLine($"Best MRE:           {alg.BestProgramMRE}");
+      Console.WriteLine($"Best Pearson R:     {alg.BestProgramPearsonR}");
+      Console.WriteLine($"Best Pearson R2:    {alg.BestProgramPearsonR2}");
+      Console.WriteLine($"Best LD:            {alg.BestProgramLD}");
       Console.WriteLine();
     }
 

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
   public class Mutation {
 
-    public static RPN<Symbol> MutateReplaceSubtree(PgpAlgorithm pgp, RPN<Symbol> o) {
+    public static RPN<Symbol> MutateReplaceSubtree(Algorithm pgp, RPN<Symbol> o) {
       var p = o.CloneDeep();
       int idx = pgp.Rng.Next(0, o.Count);
 
@@ -39,7 +39,7 @@ namespace PGP.Core.Operators {
       return p;
     }
 
-    public static RPN<Symbol> MutateTerminateSubtree(PgpAlgorithm pgp, RPN<Symbol> o) {
+    public static RPN<Symbol> MutateTerminateSubtree(Algorithm pgp, RPN<Symbol> o) {
       var p = o.CloneDeep();
       int idx = pgp.Rng.Next(0, o.Count);
 
@@ -65,7 +65,7 @@ namespace PGP.Core.Operators {
       return p;
     }
 
-    public static RPN<Symbol> MutateMultiCase(PgpAlgorithm pgp, RPN<Symbol> o) {
+    public static RPN<Symbol> MutateMultiCase(Algorithm pgp, RPN<Symbol> o) {
       var p = o.CloneDeep();
       int idx = pgp.Rng.Next(0, o.Count); // uniformly distributed
       

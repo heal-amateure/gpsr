@@ -1,12 +1,12 @@
 using ILGPU;
 using ILGPU.Algorithms;
 using ILGPU.Runtime;
-using PGP.Data;
+using GPSR.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
 
   // ===============================================================================================
   // Data-parallel (GPU) program evaluator.
@@ -45,7 +45,7 @@ namespace PGP.Core.Operators {
   // use float; conversion to/from the CPU-side double representation happens only at the host
   // boundary (upload/read-back), trading a small amount of numeric precision for portability.
   // ===============================================================================================
-  public static class EvaluationGpu {
+  public static partial class Evaluation {
 
     private const byte OpConstant = 0;
     private const byte OpVariable = 1;
@@ -169,7 +169,7 @@ namespace PGP.Core.Operators {
     // Same contract as Evaluation.EvaluateStack/EvaluateProgram (assignable to pgp.Evaluate):
     // evaluates the program over every row of `data`, fills TrueResults/EstimatedResults, and
     // returns the task's configured score, or NaN to signal a rejected/invalid program.
-    public static double EvaluateGPU(PgpAlgorithm pgp, RPN<Symbol> p, Task t, DataRecord data) {
+    public static double EvaluateGPU(Algorithm pgp, RPN<Symbol> p, Task t, DataRecord data) {
       if (_gpuDisabled)
         return Evaluation.EvaluateStack(pgp, p, t, data);
 

@@ -1,4 +1,4 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Formats.Asn1.AsnWriter;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
 
   public class Selection {  
 
@@ -14,11 +14,11 @@ namespace PGP.Core.Operators {
     public static double fitScoreSum = 0;
     public static List<double> fitScores = new List<double>();
 
-    public static int RandomSelection(PgpAlgorithm pgp, RPN<Symbol>[] population, Task task) {
+    public static int RandomSelection(Algorithm pgp, RPN<Symbol>[] population, Task task) {
       return pgp.Rng.Next(population.Length);      
     }
 
-    public static int ProportionalSelection(PgpAlgorithm pgp, RPN<Symbol>[] population, Task task) {
+    public static int ProportionalSelection(Algorithm pgp, RPN<Symbol>[] population, Task task) {
       double rnd = pgp.Rng.NextDouble() * fitScoreSum;
       double cumulative = 0.0;
       for (int i = 0; i < fitScores.Count; i++) {
@@ -28,7 +28,7 @@ namespace PGP.Core.Operators {
       return fitScores.Count - 1; // should not happen, but just in case of rounding errors
     }
     
-    public static int TournamentSelection(PgpAlgorithm pgp, RPN<Symbol>[] population, Task task) {     
+    public static int TournamentSelection(Algorithm pgp, RPN<Symbol>[] population, Task task) {     
       
       // setup tournament group
       var tournament = new int[pgp.TournamentSize];

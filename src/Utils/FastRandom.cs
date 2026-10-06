@@ -1,6 +1,6 @@
 using System;
 
-namespace PGP.Utils {
+namespace GPSR.Utils {
   /// <summary>
   /// A fast random number generator for .NET
   /// Colin Green, January 2005

@@ -1,4 +1,4 @@
-﻿using PGP.Data;
+﻿using GPSR.Data;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -9,8 +9,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PGP.Core.Operators {
-  public static class Evaluation {
+namespace GPSR.Core.Operators {
+  public static partial class Evaluation {
     // Cross-instance structural delegate cache (Cause 3 fix).
     // Key = GetStructuralKey(p, rowCount); value is reused by any program with the same topology.
     private static readonly ConcurrentDictionary<string, Action<double[], double[], double[]>>
@@ -28,49 +28,7 @@ namespace PGP.Core.Operators {
     private static readonly System.Reflection.MethodInfo _miMax = typeof(Math).GetMethod(nameof(Math.Max), new[] { typeof(double), typeof(double) })!;
     private static readonly System.Reflection.MethodInfo _miIsNaN = typeof(double).GetMethod(nameof(double.IsNaN), new[] { typeof(double) })!;
 
-    public static double EvaluateStack(PgpAlgorithm pgp, RPN<Symbol> program, Task task, DataRecord data) {
-      var localEvaluationBuffer = new Stack<double>();
-      int targetIdx = task.VariableIndices[task.TargetVariable];
-
-      for (int i = 0; i < data.RowCount; i++) {
-        foreach (var symbol in program) {
-          if (symbol.Type == SymbolType.Constant) {
-            localEvaluationBuffer.Push(symbol.Con.Value);
-          } else if (symbol.Type == SymbolType.Variable) {
-            localEvaluationBuffer.Push(data.Data[symbol.Var.Index * data.RowCount + i] * symbol.Var.Coefficient);
-          } else {
-            var tmpResult = symbol.Opr.Term(localEvaluationBuffer);
-            if (double.IsNaN(tmpResult) || double.IsInfinity(tmpResult) || double.IsNegativeInfinity(tmpResult)) {
-              localEvaluationBuffer.Clear();
-              return double.NaN;
-            } else {
-              localEvaluationBuffer.Push(tmpResult);
-            }
-            //localEvaluationBuffer.Push(symbol.Opr.Function(localEvaluationBuffer));
-
-            //if (operation.Arity == 1) evaluationBuffer.Push(operation.Function(new[] {evaluationBuffer.Pop()}));
-            //else evaluationBuffer.Push(operation.Function(new[] { evaluationBuffer.Pop(), evaluationBuffer.Pop() }));
-          }
-        }
-        var result = localEvaluationBuffer.Pop();
-        if (localEvaluationBuffer.Count > 0) {
-          Console.WriteLine("\n!!! ERROR !!!\n");
-          localEvaluationBuffer.Clear();
-          return double.NaN;
-        }
-        if (double.IsNaN(result) || double.IsInfinity(result) || double.IsNegativeInfinity(result)) {
-          return double.NaN;
-        }
-
-
-        program.TrueResults[i] = data.Data[targetIdx * data.RowCount + i]; // not necessary to do this in every evaluation, but it is more convenient to have the true values stored in the program for later use (e.g. for statistics)
-        program.EstimatedResults[i] = result;
-      }
-      program.Score = task.Score.Compute(program);
-      return program.Score;
-    }
-
-    public static double EvaluateProgram(PgpAlgorithm pgp, RPN<Symbol> p, Task t, DataRecord data) {
+    public static double EvaluateProgram(Algorithm pgp, RPN<Symbol> p, Task t, DataRecord data) {
       // --- Cause 3 fix: look up / build a structurally-keyed delegate shared across instances ---
       // --- Cause 2 fix: constants & coefficients are NOT baked in; they are passed at runtime  ---
       //     via the paramValues array, so the same delegate is valid for any numeric values.
@@ -118,7 +76,7 @@ namespace PGP.Core.Operators {
       return p.Score;
     }
 
-
+    #region EvaluateProgram helpers
 
     // Translates an RPN<Symbol> expression into a compiled Action<double[], double[], double[]>.
     // Parameters of the delegate:
@@ -307,6 +265,9 @@ namespace PGP.Core.Operators {
 
       return null;
     }
+
+    #endregion EvaluateProgram helpers
+
 
     // deprecated
     //public double EvaluateDict(RPN<Symbol> p, Dictionary<string, double> variableDict, int idx, string targetVariable) {

@@ -1,9 +1,9 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Metrics {
+namespace GPSR.Core.Metrics {
   public class RMSE : IMetric {
     public string Name { get => "RMSE"; }
     public EvaluationMetric Metric { get => EvaluationMetric.RMSE; }

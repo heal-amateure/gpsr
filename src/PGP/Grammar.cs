@@ -1,6 +1,6 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 
-namespace PGP.Core {
+namespace GPSR.Core {
 
   public interface ITerminal {
     string Name { get; set; }
@@ -89,16 +89,16 @@ namespace PGP.Core {
       ,Pi // currently not in use
     };
 
-    public static Function SelectRandom(PgpAlgorithm pgp) {
+    public static Function SelectRandom(Algorithm pgp) {
       return pgp.SelectedNonterminals.ElementAt(pgp.Rng.Next(pgp.SelectedNonterminals.Count()));
     }
 
-    public static Function SelectRandom(PgpAlgorithm pgp, int arity) {
+    public static Function SelectRandom(Algorithm pgp, int arity) {
       var ops = pgp.SelectedNonterminals.Where(x => x.Arity == arity);
       return ops.ElementAt(pgp.Rng.Next(ops.Count()));
     }
 
-    public static Function SelectRandomDifferent(PgpAlgorithm pgp, Function op) {
+    public static Function SelectRandomDifferent(Algorithm pgp, Function op) {
       var ops = pgp.SelectedNonterminals.Where(x => x.Arity == op.Arity && x != op);
       return ops.ElementAt(pgp.Rng.Next(ops.Count()));
     }

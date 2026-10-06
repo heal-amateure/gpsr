@@ -1,7 +1,7 @@
-﻿using PGP.Data;
+﻿using GPSR.Data;
 using System.Collections;
 
-namespace PGP.Core {
+namespace GPSR.Core {
 
   public class RPN<T> : List<T>, ICloneable {
 

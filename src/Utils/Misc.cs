@@ -1,4 +1,4 @@
-﻿namespace PGP.Utils {
+﻿namespace GPSR.Utils {
   public class Misc {
 
     private readonly static string charset = "abcdefghijklmnopqrstuvwxyz0123456789";    

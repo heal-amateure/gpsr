@@ -1,22 +1,22 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
   public class Crossing {
 
     // Simple crossover: picks a random operator crosspoint in each parent and swaps
     // the subtrees. No size or depth checks — fast but can produce bloated or
     // degenerate offspring.
-    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_Simple(PgpAlgorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
-      int aIdx = pgp.Rng.Next(0, a.Count);
+    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_Simple(Algorithm alg, RPN<Symbol> a, RPN<Symbol> b) {
+      int aIdx = alg.Rng.Next(0, a.Count);
       int aUpperBound = a.FindIndex(aIdx, x => x.Type == SymbolType.Operator);
       if (aUpperBound == -1) return null;
       int aLowerBound = Utils.FindSubtreeLimit(a, aUpperBound);
       if (aLowerBound == -1) return null;
 
-      int bIdx = pgp.Rng.Next(0, b.Count);
+      int bIdx = alg.Rng.Next(0, b.Count);
       int bUpperBound = b.FindIndex(bIdx, x => x.Type == SymbolType.Operator);
       if (bUpperBound == -1) return null;
       int bLowerBound = Utils.FindSubtreeLimit(b, bUpperBound);
@@ -40,20 +40,20 @@ namespace PGP.Core.Operators {
     // Attempt-based crossover: tries up to maxAttempts times to find a random
     // crosspoint pair whose offspring both satisfy the SymbolCount size bounds.
     // Simpler than the exact enumeration but may fail if compatible pairs are rare.
-    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_AttemptBased(PgpAlgorithm pgp, RPN<Symbol> a, RPN<Symbol> b, int maxAttempts = 10) {
+    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_AttemptBased(Algorithm alg, RPN<Symbol> a, RPN<Symbol> b, int maxAttempts = 10) {
       double sizeTolerance = 0.5; // allow offspring up to SymbolCount * (1 ± 0.5)
-      int minSize = (int)(pgp.SymbolCount * (1.0 - sizeTolerance));
-      int maxSize = (int)(pgp.SymbolCount * (1.0 + sizeTolerance));
+      int minSize = (int)(alg.SymbolCount * (1.0 - sizeTolerance));
+      int maxSize = (int)(alg.SymbolCount * (1.0 + sizeTolerance));
 
       for (int attempt = 0; attempt < maxAttempts; attempt++) {
-        int aIdx = pgp.Rng.Next(0, a.Count);
+        int aIdx = alg.Rng.Next(0, a.Count);
         int aUpperBound = aIdx;
         int aLowerBound = (a[aIdx].Type == SymbolType.Operator)
             ? Utils.FindSubtreeLimit(a, aUpperBound)
             : aUpperBound;
         if (aLowerBound == -1) continue;
 
-        int bIdx = pgp.Rng.Next(0, b.Count);
+        int bIdx = alg.Rng.Next(0, b.Count);
         int bUpperBound = bIdx;
         int bLowerBound = (b[bIdx].Type == SymbolType.Operator)
             ? Utils.FindSubtreeLimit(b, bUpperBound)
@@ -87,7 +87,7 @@ namespace PGP.Core.Operators {
     // Constrained crossover: enumerates all valid subtree pairs across both parents
     // and selects uniformly from those satisfying the SymbolCount (size) and
     // NestingDepth constraints. Returns null only when no valid pair exists.
-    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_Constrained(PgpAlgorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
+    public static Tuple<RPN<Symbol>, RPN<Symbol>> Cross_Constrained(Algorithm akg, RPN<Symbol> a, RPN<Symbol> b) {
       // Enumerate every valid subtree in both parents.
       var aSpans = GetSubtreeSpans(a);
       var bSpans = GetSubtreeSpans(b);
@@ -101,7 +101,7 @@ namespace PGP.Core.Operators {
       int[] aAncestors = aSpans.Select(s => AncestorCount(a, s.upper)).ToArray();
       int[] bAncestors = bSpans.Select(s => AncestorCount(b, s.upper)).ToArray();
 
-      bool checkDepth = pgp.NestingDepth > 0;
+      bool checkDepth = akg.NestingDepth > 0;
 
       // Collect all (ai, bi) pairs that satisfy BOTH constraints for BOTH offspring.
       var compatible = new List<(int ai, int bi)>();
@@ -113,15 +113,15 @@ namespace PGP.Core.Operators {
           // ── size constraint ─────────────────────────────────────────────────
           int aOffCount = aOff_base + bSize[bi];
           int bOffCount = bOff_base - bSize[bi];
-          if (aOffCount < 1 || aOffCount > pgp.SymbolCount) continue;
-          if (bOffCount < 1 || bOffCount > pgp.SymbolCount) continue;
+          if (aOffCount < 1 || aOffCount > akg.SymbolCount) continue;
+          if (bOffCount < 1 || bOffCount > akg.SymbolCount) continue;
 
           // ── depth constraint ─────────────────────────────────────────────────
           // Inserting b's subtree (depth bDepth[bi]) at a's crosspoint (aAncestors[ai]
           // operators above it) yields a path of length aAncestors[ai] + bDepth[bi].
           if (checkDepth) {
-            if (aAncestors[ai] + bDepth[bi] > pgp.NestingDepth) continue;
-            if (bAncestors[bi] + aDepth[ai] > pgp.NestingDepth) continue;
+            if (aAncestors[ai] + bDepth[bi] > akg.NestingDepth) continue;
+            if (bAncestors[bi] + aDepth[ai] > akg.NestingDepth) continue;
           }
 
           compatible.Add((ai, bi));
@@ -131,7 +131,7 @@ namespace PGP.Core.Operators {
       if (compatible.Count == 0) return null;
 
       // Pick one compatible pair uniformly at random — no retries needed.
-      var (selAi, selBi) = compatible[pgp.Rng.Next(compatible.Count)];
+      var (selAi, selBi) = compatible[akg.Rng.Next(compatible.Count)];
       var (aL, aU) = aSpans[selAi];
       var (bL, bU) = bSpans[selBi];
 
@@ -171,7 +171,7 @@ namespace PGP.Core.Operators {
     //   i-th numeric in A and B), clamped so neither parent runs out of entries.
     //
     // Returns null only when no structurally compatible subtree pair exists.
-    public static RPN<Symbol> Cross_Bezier(PgpAlgorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
+    public static RPN<Symbol> Cross_Bezier(Algorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
       double t = pgp.Rng.NextDouble(); // Bézier parameter ∈ (0,1)
 
       // ── Phase 1: Bézier-weighted structural selection ───────────────────────
@@ -272,7 +272,7 @@ namespace PGP.Core.Operators {
     // produced offspring. Because the reciprocal offspring is never required to be
     // valid, the compatible set is always at least as large as Cross_Constrained's,
     // so this version fails far less often.
-    public static RPN<Symbol> Cross(PgpAlgorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
+    public static RPN<Symbol> Cross(Algorithm pgp, RPN<Symbol> a, RPN<Symbol> b) {
       var aSpans = GetSubtreeSpans(a);
       var bSpans = GetSubtreeSpans(b);
       if (aSpans.Count == 0 || bSpans.Count == 0) return null;

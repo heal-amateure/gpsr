@@ -1,37 +1,37 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PGP.Core.Operators {
+namespace GPSR.Core.Operators {
   public class Creation {
-    public static Symbol CreateTerminal(PgpAlgorithm pgp, ref int c) {
-      double rndD = pgp.Rng.NextDouble();
+    public static Symbol CreateTerminal(Algorithm alg, ref int c) {
+      double rndD = alg.Rng.NextDouble();
       int rndI;
 
       if (rndD < 0.75) {
-        rndI = pgp.Rng.Next(0, pgp.Task.InputVariables.Count);
-        string varName = pgp.Task.InputVariables[rndI];
-        return new Symbol(new Variable(varName, pgp.Task.VariableIndices[varName], 1.0));
+        rndI = alg.Rng.Next(0, alg.Task.InputVariables.Count);
+        string varName = alg.Task.InputVariables[rndI];
+        return new Symbol(new Variable(varName, alg.Task.VariableIndices[varName], 1.0));
       } else {
-        rndI = pgp.Rng.Next(0, pgp.Task.VariableLimitsDict.Count);
+        rndI = alg.Rng.Next(0, alg.Task.VariableLimitsDict.Count);
         c++;
         return new Symbol(new Constant(
               $"c{c}",
-              pgp.Rng.NextDouble(pgp.Task.VariableLimitsDict.ElementAt(rndI).Value.Item1, pgp.Task.VariableLimitsDict.ElementAt(rndI).Value.Item2)
+              alg.Rng.NextDouble(alg.Task.VariableLimitsDict.ElementAt(rndI).Value.Item1, alg.Task.VariableLimitsDict.ElementAt(rndI).Value.Item2)
             ));
       }
     }
 
-    public static Symbol CreateVariable(PgpAlgorithm pgp) {
+    public static Symbol CreateVariable(Algorithm pgp) {
       int rndI = pgp.Rng.Next(0, pgp.Task.InputVariables.Count);
       string varName = pgp.Task.InputVariables[rndI];
       return new Symbol(new Variable(pgp.Task.InputVariables[rndI], pgp.Task.VariableIndices[varName], 1.0));
     }
 
-    public static RPN<Symbol> Breed(PgpAlgorithm pgp) {
+    public static RPN<Symbol> Breed(Algorithm pgp) {
       var p = new RPN<Symbol>(pgp.SymbolCount, pgp.DataSet.RowCount);
       int aritySum = 0, arityCount = 0, tCount = 0;
       int constantCounter = 0;
@@ -75,7 +75,7 @@ namespace PGP.Core.Operators {
     // generator. SymbolCount is a hard budget cap; NestingDepth is a hard depth
     // cap (ignored when NestingDepth == 0). Both constraints are satisfied by
     // construction — no rejection sampling or correction loops needed.
-    public static RPN<Symbol> BreedConstrained(PgpAlgorithm pgp) {
+    public static RPN<Symbol> BreedConstrained(Algorithm pgp) {
       var p = new RPN<Symbol>(pgp.SymbolCount, pgp.DataSet.RowCount);
       int constantCounter = 0;
       int depthLimit = pgp.NestingDepth > 0 ? pgp.NestingDepth : int.MaxValue;
@@ -87,7 +87,7 @@ namespace PGP.Core.Operators {
     // Recursively generates one valid subtree in post-order directly into p.
     // budget: symbols remaining across the entire program (shared, passed by ref).
     // depthRemaining: how many more levels this subtree may grow downward.
-    public static void BreedSubtree(PgpAlgorithm pgp, RPN<Symbol> p, ref int constantCounter, ref int budget, int depthRemaining) {
+    public static void BreedSubtree(Algorithm pgp, RPN<Symbol> p, ref int constantCounter, ref int budget, int depthRemaining) {
       // Force a terminal when the budget is exhausted or the depth cap is reached.
       bool forceTerminal = budget <= 1 || depthRemaining <= 1;
 

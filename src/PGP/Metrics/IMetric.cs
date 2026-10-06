@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Metrics {
+namespace GPSR.Core.Metrics {
   public interface IMetric {
     string Name { get; }
     EvaluationMetric Metric { get; }

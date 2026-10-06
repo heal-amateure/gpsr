@@ -1,4 +1,4 @@
-﻿namespace PGP.Core {
+﻿namespace GPSR.Core {
   public readonly struct Interval : IEquatable<Interval> {
     public double LowerBound { get; }
     public double UpperBound { get; }

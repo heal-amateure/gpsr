@@ -1,9 +1,9 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PGP.Core.Metrics {
+namespace GPSR.Core.Metrics {
   public class PearsonR2 : IMetric {
     public string Name { get => "PearsonR2"; }
     public EvaluationMetric Metric { get => EvaluationMetric.PearsonR2; }

@@ -1,7 +1,7 @@
-﻿using PGP.Utils;
+﻿using GPSR.Utils;
 using System.Globalization;
 
-namespace PGP.Data {
+namespace GPSR.Data {
 
   public class Transaction {
     public DateTime Date { get; set; }

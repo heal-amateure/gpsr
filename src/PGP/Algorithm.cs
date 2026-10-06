@@ -1,11 +1,11 @@
-﻿using PGP.Core.Operators;
-using PGP.Data;
-using PGP.Utils;
+﻿using GPSR.Core.Operators;
+using GPSR.Data;
+using GPSR.Utils;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
-namespace PGP.Core {
+namespace GPSR.Core {
 
   // TODO:
 
@@ -31,12 +31,11 @@ namespace PGP.Core {
   // - Rename Score to Result  
 
   // GP improvements and extensions to consider:  
-  // - implement a NSGA variant
   // - implement a Bezier-based encoding, implement a reversed Casteljau algorithm to search control points from data.
   // - implement a Bezier crossover operator that creates offspring by interpolating between two parents in the program space, which can help to explore the search space more smoothly and potentially find better solutions by combining features of both parents in a more nuanced way than simple subtree swapping
 
 
-  public class PgpAlgorithm {
+  public class Algorithm {
     private FastRandom seedRng;
     private ThreadLocal<FastRandom> rng;
     public FastRandom Rng => rng.Value;
@@ -89,13 +88,13 @@ namespace PGP.Core {
 
 
     // GP Operators
-    public Func<PgpAlgorithm, RPN<Symbol>> Breed { get; set; } = Creation.BreedConstrained;
-    public Func<PgpAlgorithm, RPN<Symbol>[], Task, int> Select { get; set; } = Selection.TournamentSelection;
-    public Func<PgpAlgorithm, RPN<Symbol>, RPN<Symbol>, RPN<Symbol>> Crossover { get; set; } = Crossing.Cross;
-    public Func<PgpAlgorithm, RPN<Symbol>, RPN<Symbol>> Mutate { get; set; } = Mutation.MutateMultiCase;
-    public List<Func<PgpAlgorithm, RPN<Symbol>, RPN<Symbol>>> Mutators { get; set; } = new List<Func<PgpAlgorithm, RPN<Symbol>, RPN<Symbol>>>();
-    public Func<PgpAlgorithm, RPN<Symbol>, Task, DataRecord, double> Evaluate { get; set; } = Evaluation.EvaluateStack;
-    public Func<PgpAlgorithm, RPN<Symbol>, Task, DataRecord, Tuple<RPN<Symbol>, double>> Optimizer { get; set; } = Optimization.OptimizeCoefficientsAndConstants;
+    public Func<Algorithm, RPN<Symbol>> Breed { get; set; } = Creation.BreedConstrained;
+    public Func<Algorithm, RPN<Symbol>[], Task, int> Select { get; set; } = Selection.TournamentSelection;
+    public Func<Algorithm, RPN<Symbol>, RPN<Symbol>, RPN<Symbol>> Crossover { get; set; } = Crossing.Cross;
+    public Func<Algorithm, RPN<Symbol>, RPN<Symbol>> Mutate { get; set; } = Mutation.MutateMultiCase;
+    public List<Func<Algorithm, RPN<Symbol>, RPN<Symbol>>> Mutators { get; set; } = new List<Func<Algorithm, RPN<Symbol>, RPN<Symbol>>>();
+    public Func<Algorithm, RPN<Symbol>, Task, DataRecord, double> Evaluate { get; set; } = Evaluation.EvaluateStack;
+    public Func<Algorithm, RPN<Symbol>, Task, DataRecord, Tuple<RPN<Symbol>, double>> Optimizer { get; set; } = Optimization.OptimizeCoefficientsAndConstants;
 
 
     // Algorithm control settings
@@ -183,7 +182,7 @@ namespace PGP.Core {
       };
     }
 
-    public PgpAlgorithm(FastRandom randomNumberGenerator,
+    public Algorithm(FastRandom randomNumberGenerator,
       int generations = 1000, int populationSize = 1000, int symbolCount = 50, int nestingDepth = 10, double crossoverRate = 1.0, double mutationRate = 0.25, int elites = 1) {
       locker = new object();
       bestSolutionLocker = new object();
