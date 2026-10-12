@@ -1,0 +1,24 @@
+[project]
+name = "gpsr"
+# Placeholder: the real version comes from Nerdbank.GitVersioning (../version.json),
+# set by CI via `python scripts/nbgv_version.py --apply`.
+version = "0.0.0"
+description = "Python wrapper for the GPSR symbolic-regression library (.NET)"
+readme = "README.md"
+authors = [
+]
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+    "pythonnet>=3.0.5",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.20,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
