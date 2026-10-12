@@ -13,7 +13,7 @@ From the repository root:
 
 ```sh
 # 1. Build the GPSR DLLs into the package (incl. dependencies such as ILGPU)
-dotnet publish src/PGP/Core.csproj -c Release -o PythonWrapper/src/gpsr/lib
+dotnet publish src/Core/Core.csproj -c Release -o PythonWrapper/src/gpsr/lib
 
 # 2. Create the venv and install the dependencies
 cd PythonWrapper
