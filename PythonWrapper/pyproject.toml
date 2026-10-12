@@ -1,5 +1,5 @@
 [project]
-name = "gpsr"
+name = "heal-amateure-gpsr"
 # Placeholder: the real version comes from Nerdbank.GitVersioning (../version.json),
 # set by CI via `python scripts/nbgv_version.py --apply`.
 version = "0.0.0"
