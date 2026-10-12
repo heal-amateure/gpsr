@@ -40,8 +40,8 @@ namespace GPSR.Runner {
 
       // --- configure data set and modeling task
       DataSet sds = ds.Shuffle(dataRng);
-      DataSet trainingSet = sds.Subset(0, 100000);
-      DataSet testSet = sds.Subset(10000, 1000);
+      DataSet trainingSet = sds.Subset(0, 1000);
+      DataSet testSet = sds.Subset(2000, 1000);
       Core.Task modelingTask = new Core.Task(
         name: "GPSR",
         inputVariables: inputVariables,
@@ -54,7 +54,7 @@ namespace GPSR.Runner {
 
       // --- configure gp hyperparameters
       var alg = new Algorithm(randomNumberGenerator: algorithmRng,
-        generations: 2,
+        generations: 1000,
         populationSize: 100,
         symbolCount: 25,
         nestingDepth: 8,
@@ -89,7 +89,7 @@ namespace GPSR.Runner {
       alg.Optimizer = Optimization.OptimizeCoefficientsAndConstants;
       alg.Crossover = Crossing.Cross;
       alg.Mutators = [Mutation.MutateReplaceSubtree, Mutation.MutateTerminateSubtree];
-      alg.Evaluate = Evaluation.EvaluateStack;
+      alg.Evaluate = Evaluation.EvaluateProgram;
 
 
       // --- configure algorithm options
