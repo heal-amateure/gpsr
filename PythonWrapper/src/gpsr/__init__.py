@@ -4,7 +4,7 @@ from importlib.metadata import version as _version
 
 from .regressor import METRICS, EvaluationResult, FitResult, GPSRegressor, Scores
 
-__version__ = _version("gpsr")  # from pyproject.toml, which CI fills from nbgv
+__version__ = _version("heal-amateure-gpsr")  # from pyproject.toml, which CI fills from nbgv
 __all__ = ["GPSRegressor", "FitResult", "EvaluationResult", "Scores", "METRICS", "plot_result"]
 
 
