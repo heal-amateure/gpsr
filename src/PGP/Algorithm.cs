@@ -126,6 +126,8 @@ namespace GPSR.Core {
     public double BestProgramMAE => population.OrderBy(x => OrderByScore(x, Task.Metric)).First().MAE;
     public double BestProgramMRE => population.OrderBy(x => OrderByScore(x, Task.Metric)).First().MRE;
     public double BestProgramLD => population.OrderBy(x => OrderByScore(x, Task.Metric)).First().LD;
+    public List<double> BestProgramEstimatedResults => population.OrderBy(x => OrderByScore(x, Task.Metric)).First().EstimatedResults;
+    public List<double> BestProgramTrueResults => population.OrderBy(x => OrderByScore(x, Task.Metric)).First().TrueResults;
     public double MeanPearsonR => population.Average(x => x.PearsonR);
     public double MedianPearsonR => population.Select(x => x.PearsonR).Median();
     public double MeanPearsonR2 => population.Average(x => x.PearsonR2);
@@ -167,6 +169,18 @@ namespace GPSR.Core {
         p.MAE = Statistics.MAE(p.TrueResults, p.EstimatedResults);
         p.LD = Metrics.LD.ComputeScore(p);
       }
+    }
+
+    // Predicts the target with the best program; ds only needs the input variables.
+    public double[] Predict(DataSet ds) {
+      var best = population.OrderBy(x => OrderByScore(x, Task.Metric)).First();
+      var rowCount = ds.RowCount;
+      var data = new double[Task.VariableIndices.Count * rowCount];
+      foreach (var v in Task.InputVariables) {
+        ds.Series[v].Values.CopyTo(data, Task.VariableIndices[v] * rowCount);
+      }
+      var dr = new DataRecord { Data = data, RowCount = rowCount, TargetIndex = Task.VariableIndices[Task.TargetVariable] };
+      return Evaluation.PredictStack(best, dr);
     }
 
     private double OrderByScore(RPN<Symbol> p, EvaluationMetric m = EvaluationMetric.NMSE) {

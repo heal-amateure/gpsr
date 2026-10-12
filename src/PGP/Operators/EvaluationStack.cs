@@ -51,5 +51,30 @@ namespace GPSR.Core.Operators {
       return program.Score;
     }
 
+    // Computes the program output for every row without needing a target variable.
+    // Unlike EvaluateStack, an invalid row yields NaN instead of aborting the evaluation.
+    public static double[] PredictStack(RPN<Symbol> program, DataRecord data) {
+      var localEvaluationBuffer = new Stack<double>();
+      var results = new double[data.RowCount];
+
+      for (int i = 0; i < data.RowCount; i++) {
+        localEvaluationBuffer.Clear();
+        foreach (var symbol in program) {
+          if (symbol.Type == SymbolType.Constant) {
+            localEvaluationBuffer.Push(symbol.Con.Value);
+          }
+          else if (symbol.Type == SymbolType.Variable) {
+            localEvaluationBuffer.Push(data.Data[symbol.Var.Index * data.RowCount + i] * symbol.Var.Coefficient);
+          }
+          else {
+            localEvaluationBuffer.Push(symbol.Opr.Term(localEvaluationBuffer));
+          }
+        }
+        var result = localEvaluationBuffer.Count == 1 ? localEvaluationBuffer.Pop() : double.NaN;
+        results[i] = double.IsFinite(result) ? result : double.NaN;
+      }
+      return results;
+    }
+
   }
 }
