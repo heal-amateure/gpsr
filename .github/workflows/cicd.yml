@@ -1,0 +1,207 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main", "release/v**"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1) Calculate version, build .NET, test, and pack
+  # ------------------------------------------------------------------
+  dotnet:
+    name: .NET build & test
+    runs-on: ubuntu-latest
+    outputs:
+      nuget-version: ${{ steps.version.outputs.nuget }}
+      python-version: ${{ steps.version.outputs.python }}
+      public-release: ${{ steps.version.outputs.public }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4  # avoid shallow clone so nbgv can work.
+        with:
+          fetch-depth: 0 
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Install nbgv
+        run: dotnet tool install --global nbgv
+
+      - name: Compute version
+        id: version
+        run: |
+          nbgv cloud 
+          json=$(nbgv get-version -f json)
+          nuget=$(jq -r  '.NuGetPackageVersion'  <<< "$json")
+          public=$(jq -r '.PublicRelease'        <<< "$json")
+
+          # Same nbgv version in PEP 440 syntax, e.g. 1.0.7-alpha -> 1.0.7a0
+          python=$(python3 PythonWrapper/scripts/nbgv_version.py)
+
+          echo "nuget=$nuget"   >> "$GITHUB_OUTPUT"
+          echo "python=$python" >> "$GITHUB_OUTPUT"
+          echo "public=$public" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Version"
+            echo "| | |"; echo "|---|---|"
+            echo "| NuGet | \`$nuget\` |"
+            echo "| PyPI | \`$python\` |"
+            echo "| Public release | $public |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - run: dotnet restore ./src
+      - run: dotnet build ./src --configuration Release --no-restore --output artifacts/build
+      - run: dotnet test ./src --configuration Release --no-build --logger "trx;LogFileName=results.trx"
+      - run: dotnet pack ./src --configuration Release --no-build --output artifacts/nuget
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget
+          path: artifacts/nuget/*
+
+      - name: Upload DLL for Python wrapper
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-lib
+          if-no-files-found: error
+          path: |
+            artifacts/build/GPSR.Core.dll
+            artifacts/build/GPSR.Data.dll
+            artifacts/build/GPSR.Utils.dll
+            artifacts/build/ILGPU.dll
+            artifacts/build/ILGPU.Algorithms.dll
+
+  # ------------------------------------------------------------------
+  # 2) Test the Python wrapper against the freshly built DLL
+  # ------------------------------------------------------------------
+  python-test:
+    name: Python ${{ matrix.python }} (${{ matrix.os }})
+    needs: dotnet
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.13"]
+    defaults:
+      run:
+        working-directory: PythonWrapper
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4 # pythonnet needs the .NET runtime the DLLs target
+        with:
+          dotnet-version: 10.0.x
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-lib
+          path: PythonWrapper/src/gpsr/lib
+      - name: Set package version (nbgv)
+        run: uv version --frozen "${{ needs.dotnet.outputs.python-version }}"
+      - run: uv run --frozen pytest -v
+
+  # ------------------------------------------------------------------
+  # 3) Build Python package (sdist + wheel)
+  # ------------------------------------------------------------------
+  python-build:
+    name: Python build
+    needs: dotnet
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PythonWrapper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-lib
+          path: PythonWrapper/src/gpsr/lib
+      - name: Set package version (nbgv)
+        run: uv version --frozen "${{ needs.dotnet.outputs.python-version }}"
+      - run: uv build
+      - run: uvx twine check dist/*
+      - name: Verify DLLs are inside the wheel
+        run: |
+          listing=$(python -m zipfile -l dist/*.whl)
+          for dll in GPSR.Core GPSR.Data GPSR.Utils ILGPU ILGPU.Algorithms; do
+            grep -q "gpsr/lib/$dll.dll" <<< "$listing" || { echo "missing $dll.dll"; exit 1; }
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: PythonWrapper/dist/*
+
+  # ------------------------------------------------------------------
+  # 4) Publish (Push to main or v*-Tag)
+  # ------------------------------------------------------------------
+  publish-nuget:
+    name: Publish to NuGet
+    needs: [dotnet, python-test, python-build]
+    if: github.event_name == 'push' && needs.dotnet.outputs.public-release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # enable GitHub Trusted Publishing (OIDC) token issuance for this job
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: nuget
+      # Get a short-lived NuGet API key
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+    
+      # Push the package
+      - name: Nuget Push
+        run: > 
+          dotnet nuget push "nuget/*.nupkg" 
+          --api-key "${{steps.login.outputs.NUGET_API_KEY}}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [dotnet, python-test, python-build]
+    if: github.event_name == 'push' && needs.dotnet.outputs.public-release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+          
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
